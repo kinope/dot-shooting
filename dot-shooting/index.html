@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ドット絵シューティングゲーム</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'DotGothic16', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 {
+            color: #ffde00;
+            text-shadow: 2px 2px #ff4500;
+        }
+        #game-container {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px #fff, 0 0 30px #ffde00, 0 0 40px #ff4500;
+            border-radius: 8px;
+            background-color: #000;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            background-color: #000;
+            border-radius: 4px;
+        }
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            z-index: 10;
+        }
+        #time-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            z-index: 10;
+        }
+        #active-powers-container {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #fff;
+        }
+        .power-icon {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #888;
+            color: #000;
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            position: relative;
+        }
+        .level-badge {
+            font-size: 10px;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 1px;
+            line-height: 1;
+        }
+         #power-up-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #000;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 3px solid #ffde00;
+            font-size: 28px;
+            text-shadow: 1px 1px #fff;
+            display: none;
+            z-index: 15;
+        }
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+        #game-over-screen h2 {
+            font-size: 48px;
+            color: #ff4500;
+            text-shadow: 2px 2px #fff;
+        }
+        #restart-button {
+            font-family: 'DotGothic16', sans-serif;
+            font-size: 24px;
+            padding: 15px 30px;
+            background-color: #ffde00;
+            color: #1a1a1a;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #restart-button:hover {
+            background-color: #fff;
+            color: #ff4500;
+            transform: scale(1.1);
+        }
+        #controls {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        #controls a {
+            color: #ffde00;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <h1>ドット絵シューティング</h1>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="480" height="640"></canvas>
+        <div id="ui-container">
+            <p>スコア: <span id="score">0</span></p>
+        </div>
+        <div id="time-container">
+            <p>時間: <span id="time">00:00</span></p>
+        </div>
+        <div id="active-powers-container"></div>
+        <div id="power-up-status"></div>
+        <div id="game-over-screen">
+            <h2>ゲームオーバー</h2>
+            <p>最終スコア: <span id="final-score">0</span></p>
+            <button id="restart-button">もう一度遊ぶ</button>
+        </div>
+    </div>
+    <div id="controls">
+        <p>操作方法: ←→/ADキーで移動, スペースキーで連射</p>
+        <p><a href="specification.html">ゲーム仕様</a></p>
+        <p><a href="../index.html">一覧に戻る</a></p>
+    </div>
+
+    <script>
+        // --- 初期設定 ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const timeElement = document.getElementById('time');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const powerUpStatus = document.getElementById('power-up-status');
+        const activePowersContainer = document.getElementById('active-powers-container');
+
+        ctx.imageSmoothingEnabled = false;
+
+        let score = 0;
+        let gameOver = false;
+        let animationId;
+        let gameTime = 0;
+        let spawnCounter = 0;
+
+        const baseValues = {
+            playerSpeed: 5,
+            shootCooldown: 12,
+            bulletWidth: 5,
+            bulletHeight: 15,
+            bulletDamage: 1,
+            enemySpeed: 1.5,
+            itemSpeed: 2,
+            initialEnemySpawnInterval: 80,
+            minEnemySpawnInterval: 0.08
+        };
+
+        const player = {
+            x: canvas.width / 2 - 20, y: canvas.height - 60,
+            width: 40, height: 40, dx: 0,
+            color: '#00ff00',
+            speed: baseValues.playerSpeed,
+            shootCooldown: 0,
+            shootCooldownTime: baseValues.shootCooldown,
+            bulletWidth: baseValues.bulletWidth,
+            bulletHeight: baseValues.bulletHeight,
+            bulletDamage: baseValues.bulletDamage,
+            activePowerUps: {},
+            shield: false,
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x + 10, this.y, 20, 10);
+                ctx.fillRect(this.x, this.y + 10, 40, 20);
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(this.x + 15, this.y + 15, 10, 10);
+                if (this.shield) {
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2 + 5, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            },
+            update() {
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                this.x += this.dx;
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+            }
+        };
+
+        const powerUpTypes = {
+            rapidFire:    { color: '#00ffff', symbol: 'R', description: "連射速度UP!" },
+            speedUp:      { color: '#ffff00', symbol: 'S', description: "移動速度UP!" },
+            damageUp:     { color: '#ff8c00', symbol: 'P', description: "攻撃力UP!" },
+            bulletSize:   { color: '#ff00ff', symbol: 'B', description: "弾サイズUP!" },
+            tripleShot:   { color: '#00ff00', symbol: 'T', description: "3方向ショット!" },
+            shield:       { color: '#ffffff', symbol: 'D', description: "シールド展開!" },
+            laser:        { color: '#ff0000', symbol: 'L', description: "レーザー発射!" },
+            scoreX2:      { color: '#ffd700', symbol: '*', description: "スコア2倍!" },
+            piercingShot: { color: '#d0021b', symbol: '貫', description: "貫通ショット!" },
+            magnet:       { color: '#bd10e0', symbol: 'A', description: "アイテム吸引!" }
+        };
+        const powerUps = [];
+        const POWER_UP_CHANCE = 0.25;
+
+        function createPowerUp(x, y) {
+            const types = Object.keys(powerUpTypes);
+            const type = types[Math.floor(Math.random() * types.length)];
+            powerUps.push({ x, y, size: 20, ...powerUpTypes[type], type });
+        }
+
+        function drawPowerUp(item) {
+            ctx.fillStyle = item.color;
+            ctx.fillRect(item.x, item.y, item.size, item.size);
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 16px DotGothic16';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(item.symbol, item.x + item.size / 2, item.y + item.size / 2 + 2);
+        }
+
+        function showStatus(text) {
+             powerUpStatus.textContent = text;
+             powerUpStatus.style.display = 'block';
+             setTimeout(() => { powerUpStatus.style.display = 'none'; }, 1500);
+        }
+
+        function activatePowerUp(type) {
+            const item = powerUpTypes[type];
+
+            if (
+                (type === 'speedUp' && player.activePowerUps.speedUp && player.activePowerUps.speedUp.level >= 5) ||
+                (type === 'damageUp' && player.activePowerUps.damageUp && player.activePowerUps.damageUp.level >= 40) ||
+                (type === 'bulletSize' && player.activePowerUps.bulletSize && player.activePowerUps.bulletSize.level >= 40) ||
+                (type === 'piercingShot' && player.activePowerUps.piercingShot && player.activePowerUps.piercingShot.level >= 20) ||
+                (type === 'tripleShot' && player.activePowerUps.tripleShot && player.activePowerUps.tripleShot.level >= 10)
+            ) {
+                return; // Silently exit if max level is reached
+            }
+
+            showStatus(item.description);
+
+            switch (type) {
+                case 'shield': player.shield = true; updateActivePowersUI(); return;
+                case 'laser':
+                     for (let i = enemies.length - 1; i >= 0; i--) {
+                        if (Math.abs((enemies[i].x + enemies[i].width / 2) - (player.x + player.width / 2)) < enemies[i].width / 2 + 5) {
+                            enemies[i].hp -= 100;
+                            if (enemies[i].hp <= 0) {
+                                score += (player.activePowerUps.scoreX2 ? 20 : 10) * enemies[i].maxHp;
+                                enemies.splice(i, 1);
+                            }
+                        }
+                    }
+                    scoreElement.textContent = score;
+                    return;
+            }
+
+            if (player.activePowerUps[type]) {
+                player.activePowerUps[type].level++;
+            } else {
+                player.activePowerUps[type] = { level: 1 };
+            }
+
+            switch (type) {
+                case 'rapidFire': player.shootCooldownTime = Math.max(3, baseValues.shootCooldown - player.activePowerUps[type].level); break;
+                case 'speedUp': player.speed = baseValues.playerSpeed + player.activePowerUps[type].level; break;
+                case 'damageUp': player.bulletDamage = baseValues.bulletDamage + player.activePowerUps[type].level; break;
+                case 'bulletSize': player.bulletWidth = baseValues.bulletWidth + player.activePowerUps[type].level; player.bulletHeight = baseValues.bulletHeight + player.activePowerUps[type].level; break;
+                case 'tripleShot': player.activePowerUps[type].shots = 3 + (player.activePowerUps[type].level -1) * 2; break;
+                case 'piercingShot': break;
+            }
+
+            updateActivePowersUI();
+        }
+
+        function updateActivePowersUI() {
+            activePowersContainer.innerHTML = '';
+            if (player.shield) {
+                const icon = document.createElement('div');
+                icon.className = 'power-icon';
+                icon.textContent = powerUpTypes.shield.symbol;
+                icon.style.backgroundColor = powerUpTypes.shield.color;
+                activePowersContainer.appendChild(icon);
+            }
+            for (const type in player.activePowerUps) {
+                 const icon = document.createElement('div');
+                 icon.className = 'power-icon';
+                 const itemInfo = powerUpTypes[type];
+                 icon.textContent = itemInfo.symbol;
+                 icon.style.backgroundColor = itemInfo.color;
+
+                 if (player.activePowerUps[type].level > 1) {
+                    const levelBadge = document.createElement('span');
+                    levelBadge.className = 'level-badge';
+                    levelBadge.textContent = `+${player.activePowerUps[type].level-1}`;
+                    icon.appendChild(levelBadge);
+                 }
+                 activePowersContainer.appendChild(icon);
+            }
+        }
+
+        function resetAllPowerUps() {
+             player.activePowerUps = {};
+             player.shield = false;
+             player.speed = baseValues.playerSpeed;
+             player.shootCooldownTime = baseValues.shootCooldown;
+             player.bulletWidth = baseValues.bulletWidth;
+             player.bulletHeight = baseValues.bulletHeight;
+             player.bulletDamage = baseValues.bulletDamage;
+             updateActivePowersUI();
+        }
+
+        const bullets = [];
+        const bulletSpeed = 7;
+
+        function shoot() {
+            if (gameOver || player.shootCooldown > 0) return;
+
+            const piercingStock = player.activePowerUps.piercingShot ? player.activePowerUps.piercingShot.level : 0;
+            const pierceCount = Math.floor(piercingStock * 0.5);
+
+            if(player.activePowerUps.tripleShot) {
+                const numShots = player.activePowerUps.tripleShot.shots;
+                const angleStep = 0.2; // Angle reduced
+                for(let i=0; i<numShots; i++) {
+                    const angle = (i - Math.floor(numShots / 2)) * angleStep;
+                    bullets.push({
+                        x: player.x + player.width / 2 - player.bulletWidth / 2, y: player.y - 1,
+                        width: player.bulletWidth, height: player.bulletHeight, color: '#00ff00',
+                        damage: player.bulletDamage,
+                        pierceCount: pierceCount,
+                        dx: Math.sin(angle) * bulletSpeed,
+                        dy: -Math.cos(angle) * bulletSpeed
+                    });
+                }
+            } else {
+                 bullets.push({
+                    x: player.x + player.width / 2 - player.bulletWidth / 2, y: player.y - 1,
+                    width: player.bulletWidth, height: player.bulletHeight, color: '#ffde00',
+                    damage: player.bulletDamage,
+                    pierceCount: pierceCount,
+                    dx: 0, dy: -bulletSpeed
+                });
+            }
+            player.shootCooldown = player.shootCooldownTime;
+        }
+
+        const enemies = [];
+
+        function createEnemy() {
+            const size = Math.random() * 20 + 20;
+            const framesPerMinute = 60 * 60;
+            const difficultyRampStartTime = 1 * framesPerMinute;
+            const difficultyMaxTime = 5 * framesPerMinute;
+            let difficultyProgress = 0;
+            if (gameTime > difficultyRampStartTime) {
+                const rampDuration = difficultyMaxTime - difficultyRampStartTime;
+                difficultyProgress = Math.min(1.0, (gameTime - difficultyRampStartTime) / rampDuration);
+            }
+
+            const hp = (1 + Math.floor(difficultyProgress * 999)) * 2; // HP doubled
+
+            enemies.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                hp: hp,
+                maxHp: hp,
+                color: `hsl(${Math.random() * 360}, 80%, ${Math.max(20, 50 - hp * 0.015)}%)`,
+                hitTimer: 0
+            });
+        }
+
+        function drawEnemy(enemy) {
+            ctx.fillStyle = enemy.hitTimer > 0 ? '#ffffff' : enemy.color;
+            const pixelSize = enemy.width / 4;
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if(Math.random() > 0.3) {
+                       ctx.fillRect(enemy.x + i * pixelSize, enemy.y + j * pixelSize, pixelSize, pixelSize);
+                       ctx.fillRect(enemy.x + (3-i) * pixelSize, enemy.y + j * pixelSize, pixelSize, pixelSize);
+                    }
+                }
+            }
+        }
+
+        const keys = { right: false, left: false, shoot: false };
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'arrowright' || key === 'd') keys.right = true;
+            else if (key === 'arrowleft' || key === 'a') keys.left = true;
+            else if (key === ' ') keys.shoot = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'arrowright' || key === 'd') keys.right = false;
+            else if (key === 'arrowleft' || key === 'a') keys.left = false;
+            else if (key === ' ') keys.shoot = false;
+        });
+
+        function handleInput() {
+            player.dx = 0;
+            if (keys.right) player.dx = player.speed;
+            if (keys.left) player.dx = -player.speed;
+            if (keys.shoot) shoot();
+        }
+
+        function checkCollisions() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const b = bullets[i]; const e = enemies[j];
+                    if (!b || !e) continue;
+                    if (b.x < e.x + e.width && b.x + b.width > e.x && b.y < e.y + e.height && b.y + b.height > e.y) {
+                        e.hp -= b.damage;
+                        e.hitTimer = 5;
+
+                        if (b.pierceCount > 0) {
+                            b.pierceCount--;
+                        } else {
+                            bullets.splice(i, 1);
+                        }
+
+                        if (e.hp <= 0) {
+                            const framesPerMinute = 60 * 60;
+                            const currentDropChance = (gameTime < framesPerMinute) ? POWER_UP_CHANCE * 5 : POWER_UP_CHANCE;
+                            if (Math.random() < currentDropChance) {
+                                createPowerUp(e.x + e.width / 2, e.y + e.height / 2);
+                            }
+                            enemies.splice(j, 1);
+                            score += (player.activePowerUps.scoreX2 ? 20 : 10) * e.maxHp;
+                            scoreElement.textContent = score;
+                        }
+
+                        if (!bullets[i]) break;
+                    }
+                }
+            }
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                if (player.x < e.x + e.width && player.x + player.width > e.x && player.y < e.y + e.height && player.y + player.height > e.y) {
+                    if (player.shield) {
+                        player.shield = false;
+                        enemies.splice(i, 1);
+                        updateActivePowersUI();
+                    } else {
+                        endGame();
+                    }
+                }
+            }
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const item = powerUps[i];
+                if (player.x < item.x + item.size && player.x + player.width > item.x && player.y < item.y + item.size && player.y + player.height > item.y) {
+                    activatePowerUp(item.type);
+                    powerUps.splice(i, 1);
+                }
+            }
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            handleInput();
+
+            player.update();
+            player.draw();
+
+            for(let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.x += b.dx; b.y += b.dy;
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.width, b.height);
+                if (b.y < -b.height || b.y > canvas.height || b.x < -b.width || b.x > canvas.width) bullets.splice(i, 1);
+            }
+
+            gameTime++;
+            const totalSeconds = Math.floor(gameTime / 60);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            timeElement.textContent = `${minutes}:${seconds}`;
+
+            const framesPerMinute = 60 * 60;
+            const difficultyRampStartTime = 1 * framesPerMinute;
+            const difficultyMaxTime = 5 * framesPerMinute;
+            let difficultyProgress = 0;
+            if (gameTime > difficultyRampStartTime) {
+                const rampDuration = difficultyMaxTime - difficultyRampStartTime;
+                difficultyProgress = Math.min(1.0, (gameTime - difficultyRampStartTime) / rampDuration);
+            }
+
+            const initialRate = 1 / baseValues.initialEnemySpawnInterval;
+            const maxRate = 1 / baseValues.minEnemySpawnInterval;
+            const currentSpawnRate = initialRate + (maxRate - initialRate) * difficultyProgress;
+
+            spawnCounter += currentSpawnRate;
+
+            if (spawnCounter >= 1) {
+                const numToSpawn = Math.floor(spawnCounter);
+                for (let i = 0; i < numToSpawn; i++) {
+                    createEnemy();
+                }
+                spawnCounter -= numToSpawn;
+            }
+
+            const currentEnemySpeed = baseValues.enemySpeed;
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                e.y += currentEnemySpeed;
+                if (e.hitTimer > 0) e.hitTimer--;
+                drawEnemy(e);
+                if (e.y > canvas.height) enemies.splice(i, 1);
+            }
+
+            for (let i = powerUps.length - 1; i >= 0; i--) {
+                const item = powerUps[i];
+                 if(player.activePowerUps.magnet){
+                    const angle = Math.atan2(player.y - item.y, player.x - item.x);
+                    item.x += Math.cos(angle) * 3; item.y += Math.sin(angle) * 3;
+                } else {
+                    item.y += baseValues.itemSpeed;
+                }
+                drawPowerUp(item);
+                if (item.y > canvas.height) powerUps.splice(i, 1);
+            }
+
+            checkCollisions();
+            animationId = requestAnimationFrame(update);
+        }
+
+        function endGame() {
+            gameOver = true;
+            cancelAnimationFrame(animationId);
+            finalScoreElement.textContent = score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function restartGame() {
+            score = 0;
+            gameOver = false;
+            bullets.length = 0;
+            enemies.length = 0;
+            powerUps.length = 0;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.dx = 0;
+            gameTime = 0;
+            spawnCounter = 0;
+            resetAllPowerUps();
+
+            scoreElement.textContent = score;
+            timeElement.textContent = "00:00";
+            gameOverScreen.style.display = 'none';
+            powerUpStatus.style.display = 'none';
+
+            update();
+        }
+
+        restartButton.addEventListener('click', restartGame);
+
+        update();
+    </script></body>
+</html>

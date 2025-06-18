@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>おもしろゲームフラッシュじゃない倉庫</title>
+    <style>
+        body {
+            background-color: #1a202c; /* よりソフトな紺色 */
+            color: #e2e8f0; /* 少し抑えた白 */
+            font-family: "MS Pゴシック", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: 15px auto;
+            border: 3px double #718096; /* 落ち着いたグレーの枠線 */
+            background-color: #2d3748; /* グレーがかった紺色 */
+        }
+
+        /* --- ヘッダー --- */
+        header h1 {
+            background-color: #4a5568; /* グレー */
+            color: #f6e05e; /* 落ち着いた黄色 */
+            text-align: center;
+            font-size: 28px;
+            margin: 0;
+            padding: 10px;
+            border-bottom: 2px solid #718096;
+            text-shadow: 1px 1px 2px #1a202c;
+        }
+
+        header .description {
+            text-align: center;
+            padding: 10px;
+            font-size: 14px;
+            color: #a0aec0; /* 説明文の色を少し暗めに */
+        }
+
+        /* --- メインコンテンツ --- */
+        .main-content {
+            padding: 15px;
+        }
+
+        /* --- 見出し --- */
+        h2 {
+            color: #90cdf4; /* 明るい青 */
+            font-size: 22px;
+            padding: 8px 10px;
+            border-bottom: 1px dashed #4a5568;
+            border-left: 5px solid #90cdf4;
+            background-color: rgba(0,0,0,0.1); /* わずかに背景色を適用 */
+        }
+
+        /* --- お知らせボックス --- */
+        .info-box {
+            border: 1px solid #4a5568;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #1a202c;
+        }
+
+        .info-box ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .info-box ul li {
+            padding: 5px 0;
+        }
+
+        /* --- ゲームリストのテーブル --- */
+        .game-list table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .game-list th, .game-list td {
+            border: 1px solid #4a5568;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .game-list th {
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        /* --- リンク --- */
+        a {
+            color: #63b3ed; /* スカイブルー */
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: #bee3f8; /* 明るいスカイブルー */
+            text-decoration: underline;
+        }
+
+        /* --- NEWアイコン --- */
+        .new-icon {
+            color: #f56565; /* 少し落ち着いた赤 */
+            font-weight: bold;
+            animation: blink 1.2s linear infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* --- フッター --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            border-top: 1px solid #718096;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        .counter {
+            border: 1px solid #718096;
+            padding: 5px 10px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>†† おもしろゲームフラッシュじゃない倉庫 ††</h1>
+            <div class="description">
+                <p>あの頃の熱狂をもう一度…！珠玉のブラウザゲームをここに集結。<br>キミはすべての伝説を目撃できるか！？</p>
+            </div>
+        </header>
+
+        <div class="main-content">
+
+            <!-- お知らせ -->
+            <div class="info-box">
+                <h2>◇◆ お知らせ ◆◇</h2>
+                <ul>
+                    <li><span class="new-icon">NEW!</span> 2025/06/18: サイト、爆誕。</li>
+                    <li>2025/06/15: 管理人が構想を思いつく。</li>
+                </ul>
+            </div>
+
+            <!-- ゲームカテゴリ -->
+            <h2>■□ ゲームカテゴリ □■</h2>
+            <p>
+                [ <a href="#">アクション</a> ] [ <a href="#">パズル</a> ] [ <a href="#">シミュレーション</a> ] [ <a href="#">RPG</a> ] [ <a href="#">その他</a> ]
+            </p>
+            <br>
+
+            <!-- 新着ゲーム -->
+            <h2>■□ 新着ゲーム □■</h2>
+            <div class="game-list">
+                <table>
+                    <tr>
+                        <th>タイトル</th>
+                        <th>ジャンル</th>
+                        <th>ひとことコメント</th>
+                    </tr>
+                    <tr>
+                        <td><a href="2.5d-rpg/index.html">2.5D RPG</a> <span class="new-icon">New!</span></td>
+                        <td>アクションRPG</td>
+                        <td>斜め見下ろし視点で敵を倒しまくれ！</td>
+                    </tr>
+                    <tr>
+                        <td><a href="dot-shooting/index.html">ドットシューティング</a> <span class="new-icon">New!</span></td>
+                        <td>シューティング</td>
+                        <td>縦スクロール＆パワーアップで大暴れ！</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p><img src="https://placehold.co/88x31/4a5568/e2e8f0?text=Under+Construction" alt="永久に工事中" onerror="this.onerror=null;this.src='https://placehold.co/88x31/4a5568/e2e8f0?text=Under+Construction'"></p>
+            <div class="counter">
+                あなたは
+                <img src="https://placehold.co/12x15/e2e8f0/1a202c?text=0" alt="0" onerror="this.onerror=null;this.src='https://placehold.co/12x15/e2e8f0/1a202c?text=0'">
+                <img src="https://placehold.co/12x15/e2e8f0/1a202c?text=0" alt="0" onerror="this.onerror=null;this.src='https://placehold.co/12x15/e2e8f0/1a202c?text=0'">
+                <img src="https://placehold.co/12x15/e2e8f0/1a202c?text=1" alt="1" onerror="this.onerror=null;this.src='https://placehold.co/12x15/e2e8f0/1a202c?text=1'">
+                <img src="https://placehold.co/12x15/e2e8f0/1a202c?text=2" alt="2" onerror="this.onerror=null;this.src='https://placehold.co/12x15/e2e8f0/1a202c?text=2'">
+                <img src="https://placehold.co/12x15/e2e8f0/1a202c?text=3" alt="3" onerror="this.onerror=null;this.src='https://placehold.co/12x15/e2e8f0/1a202c?text=3'">
+                 人目のお客様です
+            </div>
+            <p>Copyright &copy; 2025 おもしろゲームフラッシュじゃない倉庫 All Rights Reserved.</p>
+        </footer>
+    </div>
+
+</body>
+</html>

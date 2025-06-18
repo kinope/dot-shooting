@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲーム仕様インタラクティブダッシュボード</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+1p:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'M PLUS 1p', sans-serif;
+        }
+        .font-dot {
+            font-family: 'DotGothic16', sans-serif;
+        }
+        .tab-button.active {
+            background-color: #fbbf24;
+            color: #111827;
+            border-color: #fbbf24;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .key-cap {
+            background-color: #4b5563;
+            border-color: #6b7280;
+            color: #ffffff;
+            padding: 2px 8px;
+            border-width: 1px 1px 3px;
+            border-radius: 4px;
+            font-family: monospace;
+            display: inline-block;
+        }
+        .item-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(251, 191, 36, 0.3), 0 4px 6px -2px rgba(251, 191, 36, 0.2);
+        }
+        .chart-container {
+            position: relative;
+            height: 40vh;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+        .ui-element-label {
+            transition: all 0.2s ease-in-out;
+            opacity: 0;
+            visibility: hidden;
+        }
+        .ui-element:hover .ui-element-label {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold font-dot text-amber-400">ゲーム仕様ダッシュボード</h1>
+            <p class="text-gray-400 mt-2">インタラクティブな仕様書でゲームの全貌を解き明かす</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-gray-700 mb-8 space-x-2 md:space-x-4">
+            <button class="tab-button active font-bold py-2 px-4 border-b-2 border-transparent transition" data-tab="overview">概要</button>
+            <button class="tab-button font-bold py-2 px-4 border-b-2 border-transparent transition" data-tab="difficulty">ゲームフローと難易度</button>
+            <button class="tab-button font-bold py-2 px-4 border-b-2 border-transparent transition" data-tab="items">パワーアップアイテム</button>
+            <button class="tab-button font-bold py-2 px-4 border-b-2 border-transparent transition" data-tab="ui">UIレイアウト</button>
+        </nav>
+
+        <main>
+            <!-- 概要セクション -->
+            <section id="overview" class="content-section active">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold font-dot text-amber-400 mb-4">ゲームの目的</h2>
+                    <p class="mb-6">次々と出現する敵を倒し、ハイスコアを目指す縦スクロールシューティングゲームです。時間経過と共に増大する脅威を、多種多様なパワーアップアイテムを駆使して乗り越えていきます。</p>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-xl font-bold font-dot text-amber-400 mb-3">操作方法</h3>
+                            <ul class="space-y-2">
+                                <li><strong>移動:</strong> <span class="key-cap">←</span> <span class="key-cap">→</span> または <span class="key-cap">A</span> <span class="key-cap">D</span></li>
+                                <li><strong>弾の発射:</strong> <span class="key-cap">スペース</span> (長押しで連射)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold font-dot text-amber-400 mb-3">ゲームの流れ</h3>
+                            <ol class="list-decimal list-inside space-y-2">
+                                <li>ゲーム開始後、自機を操作します。</li>
+                                <li>画面上部から出現する敵を倒します。</li>
+                                <li>敵を倒すとスコアが加算されます。</li>
+                                <li>まれに出現するアイテムで自機を強化します。</li>
+                                <li>敵に接触するとゲームオーバーです。</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 難易度セクション -->
+            <section id="difficulty" class="content-section">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold font-dot text-amber-400 mb-4">時間経過と難易度スケーリング</h2>
+                    <p class="mb-6 text-gray-400 text-center">ゲームの経過時間に応じて、敵の数と体力が爆発的に増加します。下のグラフにカーソルを合わせると、各時点での具体的な難易度を確認できます。</p>
+                    <div class="chart-container">
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- アイテムセクション -->
+            <section id="items" class="content-section">
+                 <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold font-dot text-amber-400 mb-4">パワーアップアイテム一覧</h2>
+                    <p class="mb-6 text-gray-400 text-center">敵を倒すと出現するアイテムです。クリックすると詳細な効果と最大ストック数を確認できます。</p>
+                    <div id="item-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    </div>
+                </div>
+            </section>
+
+            <!-- UIセクション -->
+            <section id="ui" class="content-section">
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-2xl font-bold font-dot text-amber-400 mb-4">UIレイアウト</h2>
+                    <p class="mb-6 text-gray-400 text-center">ゲーム画面の主要なUI要素の配置です。各エリアにカーソルを合わせると説明が表示されます。</p>
+                    <div class="w-full max-w-sm mx-auto bg-black border-4 border-gray-600 aspect-[3/4] relative">
+                        <!-- Score -->
+                        <div class="ui-element absolute top-2 left-2 text-sm p-2 text-white">
+                            SCORE: 12345
+                            <div class="ui-element-label absolute bottom-full mb-2 left-0 w-max bg-amber-400 text-gray-900 text-xs font-bold px-2 py-1 rounded">左上: 現在のスコア</div>
+                        </div>
+                        <!-- Time -->
+                        <div class="ui-element absolute top-2 right-2 text-sm p-2 text-white">
+                            TIME: 03:45
+                            <div class="ui-element-label absolute bottom-full mb-2 right-0 w-max bg-amber-400 text-gray-900 text-xs font-bold px-2 py-1 rounded">右上: 経過時間</div>
+                        </div>
+                        <!-- Player -->
+                        <div class="absolute bottom-16 left-1/2 -translate-x-1/2 w-10 h-10 bg-green-500"></div>
+                        <!-- Power-ups -->
+                        <div class="ui-element absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1 p-2 border border-gray-500 bg-gray-900/50">
+                            <div class="w-6 h-6 bg-red-500"></div>
+                            <div class="w-6 h-6 bg-blue-500"></div>
+                            <div class="w-6 h-6 bg-yellow-500"></div>
+                             <div class="ui-element-label absolute top-full mt-2 left-1/2 -translate-x-1/2 w-max bg-amber-400 text-gray-900 text-xs font-bold px-2 py-1 rounded">下部中央: 発動中のパワーアップ</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <p class="mt-4 text-center"><a href="index.html">ゲーム開始</a></p>
+    </div>
+
+    <!-- アイテム詳細モーダル -->
+    <div id="item-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md border-t-4 border-amber-400 relative">
+            <button id="modal-close-button" class="absolute top-2 right-3 text-gray-400 hover:text-white text-3xl">&times;</button>
+            <div class="flex items-center mb-4">
+                <div id="modal-icon" class="w-16 h-16 flex-shrink-0 mr-4 flex items-center justify-center text-4xl font-dot rounded"></div>
+                <div>
+                    <h3 id="modal-title" class="text-2xl font-bold font-dot text-amber-400"></h3>
+                </div>
+            </div>
+            <p id="modal-description" class="mb-4 text-gray-300"></p>
+            <div class="bg-gray-900 p-4 rounded">
+                 <h4 class="font-bold text-lg text-amber-300 mb-2">仕様詳細</h4>
+                 <p class="text-gray-300"><strong>最大ストック数:</strong> <span id="modal-max-stock"></span></p>
+                 <p id="modal-note" class="text-gray-400 text-sm mt-2"></p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // タブ切り替え機能
+            const tabs = document.querySelectorAll('.tab-button');
+            const sections = document.querySelectorAll('.content-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const target = tab.getAttribute('data-tab');
+                    sections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === target) {
+                            section.classList.add('active');
+                        }
+                    });
+                     if (target === 'difficulty') {
+                        renderDifficultyChart();
+                    }
+                });
+            });
+
+            // 難易度グラフデータ
+            const difficultyData = {
+                labels: [],
+                datasets: [
+                    {
+                        label: '敵の体力 (HP)',
+                        data: [],
+                        borderColor: '#f87171',
+                        backgroundColor: 'rgba(248, 113, 113, 0.2)',
+                        fill: true,
+                        yAxisID: 'yHP',
+                        tension: 0.1,
+                    },
+                    {
+                        label: '敵の出現数 (倍率)',
+                        data: [],
+                        borderColor: '#60a5fa',
+                        backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                        fill: true,
+                        yAxisID: 'ySpawn',
+                        tension: 0.1,
+                    }
+                ]
+            };
+
+            const MAX_MINUTES = 10;
+            for (let t = 0; t <= MAX_MINUTES * 60; t += 10) {
+                const minutes = t / 60;
+                difficultyData.labels.push(`${minutes.toFixed(1)}分`);
+
+                let progress = 0;
+                if (minutes > 1) {
+                    progress = Math.min(1, (minutes - 1) / 4);
+                }
+
+                const hp = 1 + (1999 * progress);
+                difficultyData.datasets[0].data.push(hp.toFixed(0));
+
+                const spawnMultiplier = 1 + (999 * progress);
+                difficultyData.datasets[1].data.push(spawnMultiplier.toFixed(0));
+            }
+
+            // グラフ描画
+            let difficultyChartInstance = null;
+            function renderDifficultyChart() {
+                if (difficultyChartInstance) return;
+                const ctx = document.getElementById('difficultyChart').getContext('2d');
+                difficultyChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: difficultyData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        scales: {
+                            x: {
+                                title: { display: true, text: '経過時間', color: '#9ca3af' },
+                                ticks: { color: '#9ca3af' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            yHP: {
+                                type: 'linear',
+                                position: 'left',
+                                title: { display: true, text: '敵の体力 (HP)', color: '#f87171' },
+                                ticks: { color: '#f87171' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            ySpawn: {
+                                type: 'linear',
+                                position: 'right',
+                                title: { display: true, text: '敵の出現数 (倍率)', color: '#60a5fa' },
+                                ticks: { color: '#60a5fa' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: '#d1d5db' } },
+                            tooltip: {
+                                titleColor: '#fbbf24',
+                                bodyColor: '#d1d5db',
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                borderColor: '#fbbf24',
+                                borderWidth: 1,
+                            }
+                        }
+                    }
+                });
+            }
+
+
+            // アイテムデータ
+            const items = [
+                { id: 'R', name: '連射速度UP', effect: '弾の発射間隔が短くなります。', maxStock: '上限なし', note: '', color: '#0ea5e9' },
+                { id: 'S', name: '移動速度UP', effect: '自機の移動速度が上がります。', maxStock: 5, note: '', color: '#facc15' },
+                { id: 'P', name: '攻撃力UP', effect: '弾のダメージが1ずつ増加します。', maxStock: 20, note: '', color: '#f97316' },
+                { id: 'B', name: '弾サイズUP', effect: '弾が大きくなります。', maxStock: 20, note: '', color: '#d946ef' },
+                { id: 'T', name: '3方向ショット', effect: '弾を3方向同時に発射します。レベルアップで弾数が増加します。', maxStock: 5, note: '', color: '#22c55e' },
+                { id: '貫', name: '貫通ショット', effect: '弾が敵を貫通するようになります。', maxStock: 20, note: '2ストックで敵1体を貫通します。', color: '#ef4444' },
+                { id: 'D', name: 'シールド', effect: '一度だけ敵の攻撃を防ぐバリアを張ります。', maxStock: 'なし', note: '取得後、即時使用されます。（使い切り）', color: '#e5e7eb' },
+                { id: 'L', name: 'レーザー', effect: '前方の敵に大ダメージを与えるレーザーを発射します。', maxStock: 'なし', note: '取得後、即時使用されます。（使い切り）', color: '#dc2626' },
+                { id: '*', name: 'スコア2倍', effect: '敵を倒した際のスコアが2倍になります。', maxStock: '上限なし', note: '', color: '#fbbf24' },
+                { id: 'A', name: 'アイテム吸引', effect: '周りのアイテムを自動で引き寄せます。', maxStock: '上限なし', note: '', color: '#a855f7' }
+            ];
+
+            // アイテムグリッド生成
+            const itemGrid = document.getElementById('item-grid');
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'item-card bg-gray-700 p-4 rounded-lg text-center cursor-pointer';
+                card.innerHTML = `
+                    <div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center text-4xl font-dot rounded" style="background-color: ${item.color}; color: #111827;">${item.id}</div>
+                    <h4 class="font-bold">${item.name}</h4>
+                `;
+                card.addEventListener('click', () => showItemModal(item));
+                itemGrid.appendChild(card);
+            });
+
+            // モーダル機能
+            const modal = document.getElementById('item-modal');
+            const modalCloseButton = document.getElementById('modal-close-button');
+            const modalIcon = document.getElementById('modal-icon');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+            const modalMaxStock = document.getElementById('modal-max-stock');
+            const modalNote = document.getElementById('modal-note');
+
+            function showItemModal(item) {
+                modalIcon.textContent = item.id;
+                modalIcon.style.backgroundColor = item.color;
+                modalIcon.style.color = (item.id === 'D' || item.id === 'S' || item.id === '*') ? '#111827' : '#ffffff';
+                modalTitle.textContent = item.name;
+                modalDescription.textContent = item.effect;
+                modalMaxStock.textContent = item.maxStock;
+                modalNote.textContent = item.note || '';
+                modal.classList.remove('hidden');
+            }
+
+            function closeModal() {
+                modal.classList.add('hidden');
+            }
+
+            modalCloseButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Activate the first tab by default
+            document.querySelector('.tab-button[data-tab="overview"]').click();
+        });
+    </script>
+</body>
+</html>
